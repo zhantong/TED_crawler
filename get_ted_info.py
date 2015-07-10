@@ -1,10 +1,13 @@
+"""
+    用来爬取TED.com中全部的TED视频，找到视频的名字、链接、时长、类别等信息，用来与ted2str配合。
+"""
 import urllib.request
 import re
 import queue
 import mysql.connector
 import threading
-q = queue.Queue()
-r = {
+q = queue.Queue()  # 存储页数
+r = {  # 需要用到的正则表达式
     'page': re.compile(r'<a class="pagination__item pagination__link" href="/talks/quick-list\?page=\d+">(\d+)</a>'),
     'div': re.compile(r"(<div class='row quick-list__row'>.*?</div>.</div>.</div>)", re.S),
     'date': re.compile(r"<spam class='meta'>\n(.*?)\n</spam>"),
@@ -12,7 +15,7 @@ r = {
     'event': re.compile(r'<div class=\'col-xs-2 event\'>\n<span>\n<a href=".*?">(.*?)</a>'),
     'time': re.compile(r'<span class=\'meta\'></span>\n(.*?)\n</div>')
 }
-list_url = 'http://www.ted.com/talks/quick-list'
+list_url = 'http://www.ted.com/talks/quick-list'  # 获得所有信息的页面
 month = {
     'Jan': '01',
     'Feb': '02',
@@ -29,12 +32,12 @@ month = {
 }
 
 
-def trans_date(origin):
+def trans_date(origin):  # 将日期转换为容易索引的形式
     t = origin.split()
     return t[1] + month[t[0]]
 
 
-def trans_time(origin):
+def trans_time(origin):  # 将时长统一为秒
     if origin.find(':') != -1:
         t = origin.split(':')
         return int(t[0]) * 60 + int(t[1])
@@ -43,8 +46,8 @@ def trans_time(origin):
         return int(t[0][:-1]) * 60 * 60 + int(t[1][:-1]) * 60
 
 
-def init():
-    con = urllib.request.urlopen(list_url)
+def init():  # 初始化工作
+    con = urllib.request.urlopen(list_url)  # 首先获取网页数
     html = con.read().decode('utf-8')
     page = r['page'].findall(html)[-1]
     page = int(page)
@@ -53,7 +56,7 @@ def init():
     cnx = mysql.connector.connect(
         user='root', password='12325963', database='ted')
     cursor = cnx.cursor()
-    d = ("CREATE TABLE IF NOT EXISTS ted ("
+    d = ("CREATE TABLE IF NOT EXISTS ted ("  # 创建表
          "date VARCHAR(10) NOT NULL,"
          "url VARCHAR(100) NOT NULL PRIMARY KEY,"
          "name VARCHAR(100) NOT NULL,"
@@ -65,14 +68,14 @@ def init():
     cnx.close()
 
 
-def getting():
+def getting():  # 爬取全部TED信息
     cnx = mysql.connector.connect(
         user='root', password='12325963', database='ted')
     cursor = cnx.cursor()
-    d = ("INSERT IGNORE INTO ted "
+    d = ("INSERT IGNORE INTO ted "  # 数据库插入语句模板
          "(date,url,name,event,time) "
          "VALUES (%s,%s,%s,%s,%i)")
-    while not q.empty():
+    while not q.empty():  # 便于多线程并发
         page = q.get()
         con = urllib.request.urlopen(
             list_url + '?page=' + page).read().decode('utf-8')
