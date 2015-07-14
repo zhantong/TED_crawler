@@ -7,6 +7,13 @@ import queue
 import mysql.connector
 import threading
 q = queue.Queue()  # 存储页数
+
+db = {
+    'user': 'root',
+    'password': '123456',
+    'database': 'ted'
+}
+
 r = {  # 需要用到的正则表达式
     'page': re.compile(r'<a class="pagination__item pagination__link" href="/talks/quick-list\?page=\d+">(\d+)</a>'),
     'div': re.compile(r"(<div class='row quick-list__row'>.*?</div>.</div>.</div>)", re.S),
@@ -54,7 +61,7 @@ def init():  # 初始化工作
     for i in range(1, page + 1):
         q.put(str(i))
     cnx = mysql.connector.connect(
-        user='root', password='12325963', database='ted')
+        user=db['user'], password=db['password'], database=db['database'])
     cursor = cnx.cursor()
     d = ("CREATE TABLE IF NOT EXISTS ted ("  # 创建表
          "date VARCHAR(10) NOT NULL,"
@@ -70,7 +77,7 @@ def init():  # 初始化工作
 
 def getting():  # 爬取全部TED信息
     cnx = mysql.connector.connect(
-        user='root', password='12325963', database='ted')
+        user=db['user'], password=db['password'], database=db['database'])
     cursor = cnx.cursor()
     d = ("INSERT IGNORE INTO ted "  # 数据库插入语句模板
          "(date,url,name,event,time) "
