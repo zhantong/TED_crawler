@@ -49,7 +49,7 @@ def dl_from_api():
         f.write(json.dumps(ted, ensure_ascii=False, sort_keys=True))
 
 
-def test():
+def get_eng_info():
     cnx = mysql.connector.connect(
         user=db['user'], password=db['password'], database=db['database'])
     cursor = cnx.cursor()
@@ -117,6 +117,35 @@ def test():
     cnx.commit()
     cursor.close()
     cnx.close()
+def get_chi_info():
+    cnx = mysql.connector.connect(
+        user=db['user'], password=db['password'], database=db['database'])
+    cursor = cnx.cursor()
+    offset = 0
+    url = ('http://api.ted.com/v1/talks.json?api-key=%s'
+           '&limit=100'
+           '&offset=%i'
+           '&language=zh-cn')
+    update=("UPDATE ted SET name_zh_cn='%s',description_zh_cn='%s' WHERE id='%s'")
+    while 1:
+        try:
+            con = urllib.request.urlopen(
+                url % (api_key, offset)).read().decode('utf-8')
+        except Exception as e:
+            print(e)
+            continue
+        j = json.loads(con)
+        for item in j['talks']:
+            cursor.execute(update%(re.escape(item['talk']['name']),re.escape(item['talk']['description']),item['talk']['id']))
+            print('updated id %i' % item['talk']['id'])
+        if j['counts']['this'] != 100:
+            break
+        offset += 100
+        time.sleep(0.5)
+    cnx.commit()
+    cursor.close()
+    cnx.close()        
 if __name__ == '__main__':
-    # dl_from_api()
-    test()
+    dl_from_api()
+    get_eng_info()
+    get_chi_info()
