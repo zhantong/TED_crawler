@@ -56,13 +56,13 @@ def get_eng_info():
     insert = ("INSERT IGNORE INTO ted "
               "(id,event_id,name,native_language_code,description,published_at,"
               "recorded_at,released_at,slug,media_created_at,media_duration,"
-              "media_id,media_slug,media_1500k,media_2500k,media_480p,photo_url,"
+              "media_id,media_slug,media_1500k,media_2500k,media_480p,audio,photo_url,"
               "speaker_id,tags,has_subtitle_en,has_subtitle_zh_cn) "
               "VALUES ('%(id)s','%(event_id)s','%(name)s','%(native_language_code)s',"
               "'%(description)s','%(published_at)s','%(recorded_at)s','%(released_at)s',"
               "'%(slug)s','%(media_created_at)s','%(media_duration)s','%(media_id)s',"
               "'%(media_slug)s','%(media_1500k)s','%(media_2500k)s','%(media_480p)s',"
-              "'%(photo_url)s','%(speaker_id)s','%(tags)s','%(has_subtitle_en)s',"
+              "'%(audio)s','%(photo_url)s','%(speaker_id)s','%(tags)s','%(has_subtitle_en)s',"
               "'%(has_subtitle_zh_cn)s')")
     with codecs.open('ted_json', 'r', 'utf-8') as f:
         j = json.loads(f.read())
@@ -110,6 +110,8 @@ def get_eng_info():
                 if 'podcast-high' in t['media_profile_uris']['internal']:
                     info['media_480p'] = t['media_profile_uris'][
                         'internal']['podcast-high']['uri']
+                if 'audio-podcast' in t['media_profile_uris']['internal']:
+                    info['audio']=t['media_profile_uris']['internal']['audio-podcast']['uri']
             info = Counter(info)
         except KeyError as e:
             print('key error:', e)
