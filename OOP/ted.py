@@ -26,6 +26,7 @@ class TED(baseClass.BaseClass):
         self.write_list = []
         self.video_list = []
         self.video_file_count = 0  # 统计TED文件夹中已有视频数目
+        os.chdir(path) #统一路径，避免各函数逻辑复杂
 
     def dl_from_api(self):  # 从官网API接口获得全部视频信息
         offset = 0  # API接口限制，需要分多次抓取
@@ -171,7 +172,6 @@ class TED(baseClass.BaseClass):
         self.cnx.commit()
 
     def list_file(self):  # 生成目录树
-        os.chdir(path)  # 修改当前路径为TED文件夹
         file_list = {}
         file_name = '目录.txt'
         for item in os.listdir('./'):
@@ -189,7 +189,6 @@ class TED(baseClass.BaseClass):
         return d['id'] + '_' + re.sub(rstr, ' ', d['name']).strip()
 
     def write_to_file(self):  # 将info、中文介绍、英文介绍写入到文件，并且移动视频到相应文件夹
-        os.chdir(path)  # 修改当前目录到TED文件夹
         u = 'http://www.ted.com/talks/'  # 用于生成此演讲URL
         query = "SELECT id,name,name_zh_cn,native_language_code,description,description_zh_cn,recorded_at,media_duration,slug,media_1500k,speaker_id,tags FROM ted"
         self.cursor.execute(query)
@@ -262,6 +261,7 @@ class TED(baseClass.BaseClass):
         self.multi_thread(20, dl)
 
     def dl_subtitle(self, lan):  # 下载字幕，参数为cn或zh-cn
+
         language = {
             'en': {'db': 'en',
                    'srt': 'en'},
@@ -302,7 +302,7 @@ class TED(baseClass.BaseClass):
         self.multi_thread(3, dl)
 
     def walk(self):  # 遍历TED文件夹，找到所有的视频
-        for root, dirs, files in os.walk(path):
+        for root, dirs, files in os.walk('./'):
             for name in files:
                 if name.endswith('.mp4'):
                     self.video_list.append(name)
